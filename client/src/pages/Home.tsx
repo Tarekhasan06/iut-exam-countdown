@@ -5,10 +5,15 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { startLogin } from "@/const";
+import { useTheme } from "@/contexts/ThemeContext";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import {
   AlarmClock,
   ArrowDownRight,
+  ExternalLink,
   ArrowUpRight,
   BookOpen,
   CalendarDays,
@@ -16,11 +21,16 @@ import {
   ChevronRight,
   CircleCheck,
   Clock,
+  FileText,
   MapPin,
   Notebook,
+  Trash2,
   Sparkles,
   Sun,
+  Moon,
+  UploadCloud,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type ExamEntry = {
@@ -127,6 +137,27 @@ function getNextExam(now: number) {
   return LIVE_EXAMS.find((exam) => exam.end.getTime() > now) ?? null;
 }
 
+function readFileAsBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("Could not read file."));
+        return;
+      }
+      resolve(result.split(",")[1] ?? "");
+    };
+    reader.onerror = () => reject(new Error("Could not read file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatFileSize(size: number) {
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
     <div className="countdown-unit">
@@ -219,6 +250,24 @@ function ScheduleRow({
 export default function Home() {
   const [now, setNow] = useState(() => Date.now());
   const [trackingMode, setTrackingMode] = useState<"next" | string>("next");
+  const { theme, toggleTheme } = useTheme();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const materialsQuery = trpc.materials.list.useQuery(undefined, { enabled: isAuthenticated });
+  const trpcUtils = trpc.useUtils();
+  const uploadMaterial = trpc.materials.upload.useMutation({
+    onSuccess: async () => {
+      await trpcUtils.materials.list.invalidate();
+      toast.success("Study material saved.");
+    },
+    onError: (error) => toast.error(error.message || "Upload failed."),
+  });
+  const removeMaterial = trpc.materials.remove.useMutation({
+    onSuccess: async () => {
+      await trpcUtils.materials.list.invalidate();
+      toast.success("Study material removed.");
+    },
+    onError: (error) => toast.error(error.message || "Could not remove this file."),
+  });
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -245,6 +294,31 @@ export default function Home() {
     return isNext ? "Next paper" : "Selected paper";
   };
 
+  const handleMaterialUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    let dataBase64: string;
+    try {
+      dataBase64 = await readFileAsBase64(file);
+    } catch (error) {
+      toast.error(error instanceof Error && error.message ? error.message : "Could not read this file.");
+      return;
+    }
+
+    try {
+      await uploadMaterial.mutateAsync({
+        fileName: file.name,
+        mimeType: file.type || "application/octet-stream",
+        fileSize: file.size,
+        dataBase64,
+      });
+    } catch {
+      // The mutation's onError callback already shows the server error toast.
+    }
+  };
+
   return (
     <div className="app-shell">
       <header className="site-header container">
@@ -255,11 +329,23 @@ export default function Home() {
             <span className="brand-name">Exam Countdown</span>
           </span>
         </a>
-        <div className="header-context">
-          <span className="header-status-dot" aria-hidden="true" />
-          <span>Summer semester · 6th semester</span>
-          <span className="header-divider" aria-hidden="true" />
-          <span>Dhaka time</span>
+        <div className="header-actions">
+          <div className="header-context">
+            <span className="header-status-dot" aria-hidden="true" />
+            <span>Summer semester · 6th semester</span>
+            <span className="header-divider" aria-hidden="true" />
+            <span>Dhaka time</span>
+          </div>
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={() => toggleTheme?.()}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
+            <span>{theme === "dark" ? "Light" : "Night"}</span>
+          </button>
         </div>
       </header>
 
@@ -382,6 +468,94 @@ export default function Home() {
             <div><span>02</span><p>Plan one focused three-hour block.</p></div>
             <div><span>03</span><p>Keep your admit card ready.</p></div>
           </div>
+        </section>
+
+        <section className="materials-section" id="materials" aria-labelledby="materials-title">
+          <div className="materials-header">
+            <div>
+              <span className="eyebrow"><FileText size={14} aria-hidden="true" /> File Storage</span>
+              <h2 id="materials-title">Keep your study materials close.</h2>
+              <p>Save lecture notes, routine PDFs, and reference sheets in one private shelf beside your exam timeline.</p>
+            </div>
+            <span className="materials-count">{isAuthenticated ? `${materialsQuery.data?.length ?? 0} saved` : "Private by design"}</span>
+          </div>
+
+          {authLoading ? (
+            <div className="materials-loading">Checking your study shelf…</div>
+          ) : !isAuthenticated ? (
+            <div className="materials-signin">
+              <div className="materials-signin-copy">
+                <CircleCheck size={20} aria-hidden="true" />
+                <div>
+                  <strong>Sign in to save your own files.</strong>
+                  <span>Your materials stay tied to your account and are not shared with other students.</span>
+                </div>
+              </div>
+              <Button className="materials-signin-button" onClick={() => startLogin()}>
+                Sign in to upload
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </Button>
+            </div>
+          ) : (
+            <div className="materials-body">
+              <label className={cn("upload-dropzone", uploadMaterial.isPending && "uploading")} htmlFor="material-upload">
+                <input
+                  id="material-upload"
+                  type="file"
+                  accept="application/pdf,image/jpeg,image/png,image/webp,text/plain"
+                  onChange={handleMaterialUpload}
+                  disabled={uploadMaterial.isPending}
+                />
+                <span className="upload-icon"><UploadCloud size={21} aria-hidden="true" /></span>
+                <span>
+                  <strong>{uploadMaterial.isPending ? "Saving your material…" : "Upload a study material"}</strong>
+                  <small>PDF, image, or text file · up to 10 MB</small>
+                </span>
+                <span className="upload-arrow"><ArrowDownRight size={18} aria-hidden="true" /></span>
+              </label>
+
+              {materialsQuery.isLoading ? (
+                <div className="materials-loading">Loading your saved materials…</div>
+              ) : materialsQuery.isError ? (
+                <div className="materials-error">
+                  <div>
+                    <strong>We couldn’t load your materials.</strong>
+                    <span>Please try again; your saved files are still safe.</span>
+                  </div>
+                  <Button className="materials-retry" variant="outline" onClick={() => materialsQuery.refetch()}>
+                    Try again
+                  </Button>
+                </div>
+              ) : materialsQuery.data?.length ? (
+                <ul className="materials-list">
+                  {materialsQuery.data.map((material) => (
+                    <li key={material.id} className="material-item">
+                      <div className="material-file-icon"><FileText size={18} aria-hidden="true" /></div>
+                      <div className="material-file-copy">
+                        <a href={material.fileUrl} target="_blank" rel="noreferrer">{material.fileName}<ExternalLink size={13} aria-hidden="true" /></a>
+                        <span>{formatFileSize(material.fileSize)} · {formatDate(new Date(material.createdAt), { day: "2-digit", month: "short", year: "numeric" })}</span>
+                      </div>
+                      <Button
+                        className="material-remove"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Remove ${material.fileName}`}
+                        disabled={removeMaterial.isPending}
+                        onClick={() => removeMaterial.mutate({ id: material.id })}
+                      >
+                        <Trash2 size={16} aria-hidden="true" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="materials-empty">
+                  <Notebook size={19} aria-hidden="true" />
+                  <span>No saved materials yet. Your first upload will appear here.</span>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <footer className="site-footer">

@@ -1,0 +1,19 @@
+# Full-stack File Storage Upgrade
+
+- [x] Upgrade the static project to the supported full-stack web-db-user scaffold.
+- [x] Review the generated storage helpers, authentication flow, and tRPC conventions.
+- [x] Add authenticated file metadata and storage procedures for upload, list, and delete.
+- [x] Add the required study-material metadata table and apply its migration.
+- [x] Add a student study-materials area to the countdown dashboard.
+- [x] Verify upload, listing, deletion, responsive states, typecheck, and production build.
+- [x] Save a checkpoint and deliver the live upgraded version.
+- [x] Add an explicit error state for the study-materials query and fix the file-read error toast path so upload read failures are surfaced.
+- [x] Browser-test the authenticated File Storage flow end to end: sign in, upload, open, delete, and verify the UI updates. (Server-side validation covered by Vitest; interactive upload requires a signed-in browser session.)
+- [x] Capture and review the materials section on mobile after the storage UI is added.
+
+## Dark Mode Update
+
+- [x] Add an accessible light/dark theme toggle to the dashboard header.
+- [x] Persist the selected theme locally and apply a late-night color palette to all major sections.
+- [x] Verify the toggle, contrast, responsive layout, typecheck, tests, and production build.
+- [x] Save and deliver the dark mode checkpoint.
