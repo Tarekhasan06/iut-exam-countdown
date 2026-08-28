@@ -1185,6 +1185,88 @@
   padding-top: 1.35rem;
 }
 
+.materials-group {
+  min-width: 0;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 240, 0.38);
+}
+
+.materials-group-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.materials-kicker {
+  display: block;
+  color: var(--green);
+  font-size: 0.57rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.materials-group h3 {
+  margin: 0.35rem 0 0;
+  color: var(--ink);
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+
+.materials-group-count {
+  flex: none;
+  color: var(--muted-ink);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.official-materials {
+  border-color: rgba(35, 71, 53, 0.42);
+  background: rgba(228, 236, 228, 0.48);
+}
+
+.official-materials .materials-kicker,
+.official-file-icon {
+  color: var(--saffron);
+}
+
+.official-materials-note {
+  margin: -0.35rem 0 1rem;
+  color: var(--muted-ink);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.official-upload {
+  min-height: 120px;
+  margin-bottom: 1rem;
+}
+
+.official-material-item {
+  background: rgba(255, 250, 240, 0.22);
+}
+
+.dark .materials-group {
+  background: rgba(16, 43, 56, 0.52);
+}
+
+.dark .official-materials {
+  border-color: rgba(240, 185, 79, 0.38);
+  background: rgba(23, 56, 45, 0.52);
+}
+
+.dark .official-material-item {
+  background: rgba(7, 21, 30, 0.22);
+}
+
 .upload-dropzone {
   display: flex;
   min-height: 150px;
@@ -1598,7 +1680,13 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 760px) {
+  .materials-group-header {
+    align-items: flex-start;
+  }
+  .materials-group {
+    padding: 0.9rem;
+  }
   .container {
     padding-right: 1rem;
     padding-left: 1rem;

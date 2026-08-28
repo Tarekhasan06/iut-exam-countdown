@@ -3,8 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { deleteStudyMaterial, insertStudyMaterial, listStudyMaterials } from "./db";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { deleteSharedStudyMaterial, deleteStudyMaterial, insertStudyMaterial, listSharedStudyMaterials, listStudyMaterials } from "./db";
 import { storagePut } from "./storage";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -31,6 +31,7 @@ export const appRouter = router({
 
   materials: router({
     list: protectedProcedure.query(({ ctx }) => listStudyMaterials(ctx.user.id)),
+    shared: protectedProcedure.query(() => listSharedStudyMaterials()),
 
     upload: protectedProcedure
       .input(z.object({
@@ -38,8 +39,12 @@ export const appRouter = router({
         mimeType: z.string().min(1).max(128),
         fileSize: z.number().int().positive().max(MAX_FILE_SIZE),
         dataBase64: z.string().min(1).max(14_000_000),
+        visibility: z.enum(["private", "shared"]).default("private"),
       }))
       .mutation(async ({ ctx, input }) => {
+        if (input.visibility === "shared" && ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can publish official materials." });
+        }
         if (!ALLOWED_MIME_TYPES.has(input.mimeType)) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Unsupported file type." });
         }
@@ -50,7 +55,7 @@ export const appRouter = router({
         }
 
         const stored = await storagePut(
-          `study-materials/${ctx.user.id}/${safeFileName(input.fileName)}`,
+          `study-materials/${input.visibility}/${ctx.user.id}/${safeFileName(input.fileName)}`,
           bytes,
           input.mimeType,
         );
@@ -61,6 +66,7 @@ export const appRouter = router({
           fileName: input.fileName,
           mimeType: input.mimeType,
           fileSize: input.fileSize,
+          visibility: input.visibility,
         });
 
         if (!created) {
@@ -73,6 +79,13 @@ export const appRouter = router({
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(async ({ ctx, input }) => {
         await deleteStudyMaterial(ctx.user.id, input.id);
+        return { success: true } as const;
+      }),
+
+    removeShared: adminProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await deleteSharedStudyMaterial(input.id);
         return { success: true } as const;
       }),
   }),

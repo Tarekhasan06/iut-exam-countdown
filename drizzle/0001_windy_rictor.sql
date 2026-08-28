@@ -1,0 +1,1 @@
+ALTER TABLE `studyMaterials` ADD `visibility` enum('private','shared') DEFAULT 'private' NOT NULL;

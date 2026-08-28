@@ -96,7 +96,18 @@ export async function listStudyMaterials(userId: number) {
   return db
     .select()
     .from(studyMaterials)
-    .where(eq(studyMaterials.userId, userId))
+    .where(and(eq(studyMaterials.userId, userId), eq(studyMaterials.visibility, "private")))
+    .orderBy(desc(studyMaterials.createdAt));
+}
+
+export async function listSharedStudyMaterials() {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  return db
+    .select()
+    .from(studyMaterials)
+    .where(eq(studyMaterials.visibility, "shared"))
     .orderBy(desc(studyMaterials.createdAt));
 }
 
@@ -120,5 +131,14 @@ export async function deleteStudyMaterial(userId: number, id: number) {
 
   await db
     .delete(studyMaterials)
-    .where(and(eq(studyMaterials.id, id), eq(studyMaterials.userId, userId)));
+    .where(and(eq(studyMaterials.id, id), eq(studyMaterials.userId, userId), eq(studyMaterials.visibility, "private")));
+}
+
+export async function deleteSharedStudyMaterial(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  await db
+    .delete(studyMaterials)
+    .where(and(eq(studyMaterials.id, id), eq(studyMaterials.visibility, "shared")));
 }

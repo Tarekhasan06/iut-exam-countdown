@@ -252,11 +252,16 @@ export default function Home() {
   const [trackingMode, setTrackingMode] = useState<"next" | string>("next");
   const { theme, toggleTheme } = useTheme();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const isAdmin = user?.role === "admin";
   const materialsQuery = trpc.materials.list.useQuery(undefined, { enabled: isAuthenticated });
+  const sharedMaterialsQuery = trpc.materials.shared.useQuery(undefined, { enabled: isAuthenticated });
   const trpcUtils = trpc.useUtils();
   const uploadMaterial = trpc.materials.upload.useMutation({
     onSuccess: async () => {
-      await trpcUtils.materials.list.invalidate();
+      await Promise.all([
+        trpcUtils.materials.list.invalidate(),
+        trpcUtils.materials.shared.invalidate(),
+      ]);
       toast.success("Study material saved.");
     },
     onError: (error) => toast.error(error.message || "Upload failed."),
@@ -267,6 +272,13 @@ export default function Home() {
       toast.success("Study material removed.");
     },
     onError: (error) => toast.error(error.message || "Could not remove this file."),
+  });
+  const removeSharedMaterial = trpc.materials.removeShared.useMutation({
+    onSuccess: async () => {
+      await trpcUtils.materials.shared.invalidate();
+      toast.success("Official material removed.");
+    },
+    onError: (error) => toast.error(error.message || "Could not remove this official material."),
   });
 
   useEffect(() => {
@@ -294,7 +306,7 @@ export default function Home() {
     return isNext ? "Next paper" : "Selected paper";
   };
 
-  const handleMaterialUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMaterialUpload = async (event: React.ChangeEvent<HTMLInputElement>, visibility: "private" | "shared" = "private") => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
@@ -313,6 +325,7 @@ export default function Home() {
         mimeType: file.type || "application/octet-stream",
         fileSize: file.size,
         dataBase64,
+        visibility,
       });
     } catch {
       // The mutation's onError callback already shows the server error toast.
@@ -475,9 +488,9 @@ export default function Home() {
             <div>
               <span className="eyebrow"><FileText size={14} aria-hidden="true" /> File Storage</span>
               <h2 id="materials-title">Keep your study materials close.</h2>
-              <p>Save lecture notes, routine PDFs, and reference sheets in one private shelf beside your exam timeline.</p>
+              <p>Save personal notes privately, or find admin-published routine PDFs and reference sheets in one shelf beside your exam timeline.</p>
             </div>
-            <span className="materials-count">{isAuthenticated ? `${materialsQuery.data?.length ?? 0} saved` : "Private by design"}</span>
+            <span className="materials-count">{isAuthenticated ? `${materialsQuery.data?.length ?? 0} private · ${sharedMaterialsQuery.data?.length ?? 0} official` : "Private by design"}</span>
           </div>
 
           {authLoading ? (
@@ -488,7 +501,7 @@ export default function Home() {
                 <CircleCheck size={20} aria-hidden="true" />
                 <div>
                   <strong>Sign in to save your own files.</strong>
-                  <span>Your materials stay tied to your account and are not shared with other students.</span>
+                  <span>Official materials will also appear here after you sign in.</span>
                 </div>
               </div>
               <Button className="materials-signin-button" onClick={() => startLogin()}>
@@ -498,62 +511,123 @@ export default function Home() {
             </div>
           ) : (
             <div className="materials-body">
-              <label className={cn("upload-dropzone", uploadMaterial.isPending && "uploading")} htmlFor="material-upload">
-                <input
-                  id="material-upload"
-                  type="file"
-                  accept="application/pdf,image/jpeg,image/png,image/webp,text/plain"
-                  onChange={handleMaterialUpload}
-                  disabled={uploadMaterial.isPending}
-                />
-                <span className="upload-icon"><UploadCloud size={21} aria-hidden="true" /></span>
-                <span>
-                  <strong>{uploadMaterial.isPending ? "Saving your material…" : "Upload a study material"}</strong>
-                  <small>PDF, image, or text file · up to 10 MB</small>
-                </span>
-                <span className="upload-arrow"><ArrowDownRight size={18} aria-hidden="true" /></span>
-              </label>
-
-              {materialsQuery.isLoading ? (
-                <div className="materials-loading">Loading your saved materials…</div>
-              ) : materialsQuery.isError ? (
-                <div className="materials-error">
+              <div className="materials-group">
+                <div className="materials-group-header">
                   <div>
-                    <strong>We couldn’t load your materials.</strong>
-                    <span>Please try again; your saved files are still safe.</span>
+                    <span className="materials-kicker">Private shelf</span>
+                    <h3>Your study materials</h3>
                   </div>
-                  <Button className="materials-retry" variant="outline" onClick={() => materialsQuery.refetch()}>
-                    Try again
-                  </Button>
+                  <span className="materials-group-count">{materialsQuery.data?.length ?? 0} saved</span>
                 </div>
-              ) : materialsQuery.data?.length ? (
-                <ul className="materials-list">
-                  {materialsQuery.data.map((material) => (
-                    <li key={material.id} className="material-item">
-                      <div className="material-file-icon"><FileText size={18} aria-hidden="true" /></div>
-                      <div className="material-file-copy">
-                        <a href={material.fileUrl} target="_blank" rel="noreferrer">{material.fileName}<ExternalLink size={13} aria-hidden="true" /></a>
-                        <span>{formatFileSize(material.fileSize)} · {formatDate(new Date(material.createdAt), { day: "2-digit", month: "short", year: "numeric" })}</span>
-                      </div>
-                      <Button
-                        className="material-remove"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Remove ${material.fileName}`}
-                        disabled={removeMaterial.isPending}
-                        onClick={() => removeMaterial.mutate({ id: material.id })}
-                      >
-                        <Trash2 size={16} aria-hidden="true" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="materials-empty">
-                  <Notebook size={19} aria-hidden="true" />
-                  <span>No saved materials yet. Your first upload will appear here.</span>
+                <label className={cn("upload-dropzone", uploadMaterial.isPending && "uploading")} htmlFor="material-upload">
+                  <input
+                    id="material-upload"
+                    type="file"
+                    accept="application/pdf,image/jpeg,image/png,image/webp,text/plain"
+                    onChange={(event) => handleMaterialUpload(event, "private")}
+                    disabled={uploadMaterial.isPending}
+                  />
+                  <span className="upload-icon"><UploadCloud size={21} aria-hidden="true" /></span>
+                  <span>
+                    <strong>{uploadMaterial.isPending ? "Saving your material…" : "Upload a study material"}</strong>
+                    <small>Private to your account · PDF, image, or text · up to 10 MB</small>
+                  </span>
+                  <span className="upload-arrow"><ArrowDownRight size={18} aria-hidden="true" /></span>
+                </label>
+
+                {materialsQuery.isLoading ? (
+                  <div className="materials-loading">Loading your saved materials…</div>
+                ) : materialsQuery.isError ? (
+                  <div className="materials-error">
+                    <div>
+                      <strong>We couldn’t load your materials.</strong>
+                      <span>Please try again; your saved files are still safe.</span>
+                    </div>
+                    <Button className="materials-retry" variant="outline" onClick={() => materialsQuery.refetch()}>Try again</Button>
+                  </div>
+                ) : materialsQuery.data?.length ? (
+                  <ul className="materials-list">
+                    {materialsQuery.data.map((material) => (
+                      <li key={material.id} className="material-item">
+                        <div className="material-file-icon"><FileText size={18} aria-hidden="true" /></div>
+                        <div className="material-file-copy">
+                          <a href={material.fileUrl} target="_blank" rel="noreferrer">{material.fileName}<ExternalLink size={13} aria-hidden="true" /></a>
+                          <span>{formatFileSize(material.fileSize)} · {formatDate(new Date(material.createdAt), { day: "2-digit", month: "short", year: "numeric" })}</span>
+                        </div>
+                        <Button className="material-remove" variant="ghost" size="icon" aria-label={`Remove ${material.fileName}`} disabled={removeMaterial.isPending} onClick={() => removeMaterial.mutate({ id: material.id })}>
+                          <Trash2 size={16} aria-hidden="true" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="materials-empty">
+                    <Notebook size={19} aria-hidden="true" />
+                    <span>No saved materials yet. Your first upload will appear here.</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="materials-group official-materials">
+                <div className="materials-group-header">
+                  <div>
+                    <span className="materials-kicker">Official Materials</span>
+                    <h3>Shared by IUT admins</h3>
+                  </div>
+                  <span className="materials-group-count">{sharedMaterialsQuery.data?.length ?? 0} shared</span>
                 </div>
-              )}
+                <p className="official-materials-note">Admin-published resources are visible to every signed-in student. Personal uploads stay private.</p>
+                {isAdmin && (
+                  <label className={cn("upload-dropzone official-upload", uploadMaterial.isPending && "uploading")} htmlFor="official-material-upload">
+                    <input
+                      id="official-material-upload"
+                      type="file"
+                      accept="application/pdf,image/jpeg,image/png,image/webp,text/plain"
+                      onChange={(event) => handleMaterialUpload(event, "shared")}
+                      disabled={uploadMaterial.isPending}
+                    />
+                    <span className="upload-icon"><UploadCloud size={21} aria-hidden="true" /></span>
+                    <span>
+                      <strong>{uploadMaterial.isPending ? "Publishing official material…" : "Publish an official material"}</strong>
+                      <small>Shared with signed-in students · up to 10 MB</small>
+                    </span>
+                    <span className="upload-arrow"><ArrowDownRight size={18} aria-hidden="true" /></span>
+                  </label>
+                )}
+                {sharedMaterialsQuery.isLoading ? (
+                  <div className="materials-loading">Loading official materials…</div>
+                ) : sharedMaterialsQuery.isError ? (
+                  <div className="materials-error">
+                    <div>
+                      <strong>We couldn’t load official materials.</strong>
+                      <span>Please try again in a moment.</span>
+                    </div>
+                    <Button className="materials-retry" variant="outline" onClick={() => sharedMaterialsQuery.refetch()}>Try again</Button>
+                  </div>
+                ) : sharedMaterialsQuery.data?.length ? (
+                  <ul className="materials-list">
+                    {sharedMaterialsQuery.data.map((material) => (
+                      <li key={material.id} className="material-item official-material-item">
+                        <div className="material-file-icon official-file-icon"><FileText size={18} aria-hidden="true" /></div>
+                        <div className="material-file-copy">
+                          <a href={material.fileUrl} target="_blank" rel="noreferrer">{material.fileName}<ExternalLink size={13} aria-hidden="true" /></a>
+                          <span>{formatFileSize(material.fileSize)} · {formatDate(new Date(material.createdAt), { day: "2-digit", month: "short", year: "numeric" })}</span>
+                        </div>
+                        {isAdmin && (
+                          <Button className="material-remove" variant="ghost" size="icon" aria-label={`Remove ${material.fileName}`} disabled={removeSharedMaterial.isPending} onClick={() => removeSharedMaterial.mutate({ id: material.id })}>
+                            <Trash2 size={16} aria-hidden="true" />
+                          </Button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="materials-empty official-empty">
+                    <Notebook size={19} aria-hidden="true" />
+                    <span>{isAdmin ? "No official materials yet. Publish the first shared resource above." : "No official materials have been published yet."}</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>

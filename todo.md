@@ -17,3 +17,12 @@
 - [x] Persist the selected theme locally and apply a late-night color palette to all major sections.
 - [x] Verify the toggle, contrast, responsive layout, typecheck, tests, and production build.
 - [x] Save and deliver the dark mode checkpoint.
+
+## Shared Official Materials
+
+- [x] Add a shared/public visibility flag to study-material metadata with a safe migration default.
+- [x] Return shared materials to authenticated students while keeping private materials owner-only.
+- [x] Restrict shared uploads and shared-material deletion to admins.
+- [x] Add an Official Materials section with admin upload controls and student read-only access.
+- [x] Verify permissions, list/open/delete behavior, responsive rendering, tests, and production build.
+- [x] Save and deliver the shared-materials checkpoint.
