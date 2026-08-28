@@ -424,6 +424,16 @@
   font-style: normal;
 }
 
+.selected-course-name {
+  max-width: 24rem;
+  margin: 0.72rem 0 0;
+  color: rgba(255, 250, 240, 0.7);
+  font-size: clamp(0.78rem, 1.4vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+}
+
 .heading-arrow {
   flex: none;
   margin-top: 0.8rem;
@@ -734,6 +744,15 @@
   font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: 0.025em;
+}
+
+.course-name {
+  display: block !important;
+  max-width: 14rem;
+  margin-top: 0.2rem !important;
+  color: rgba(255, 250, 240, 0.7) !important;
+  font-size: 0.67rem !important;
+  line-height: 1.35 !important;
 }
 
 .next-badge,

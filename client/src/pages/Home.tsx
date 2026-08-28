@@ -29,6 +29,7 @@ type ExamEntry = {
   day: string;
   shortDate: string;
   course?: string;
+  name?: string;
   room?: string;
   start?: Date;
   end?: Date;
@@ -45,6 +46,7 @@ const EXAMS: ExamEntry[] = [
     day: "Friday",
     shortDate: "28 Aug",
     course: "IPE 4607",
+    name: "Control Engineering and Industrial Automation",
     room: "3rd AcB 104, 105, 108 · 2nd AcB 201, 202, 304",
     start: new Date("2026-08-28T03:30:00.000Z"),
     end: new Date("2026-08-28T06:30:00.000Z"),
@@ -55,6 +57,7 @@ const EXAMS: ExamEntry[] = [
     day: "Monday",
     shortDate: "31 Aug",
     course: "IPE 4603",
+    name: "Manufacturing Planning and Control",
     room: "3rd AcB 104, 105, 108 · 2nd AcB 201, 202, 304",
     start: new Date("2026-08-31T03:30:00.000Z"),
     end: new Date("2026-08-31T06:30:00.000Z"),
@@ -65,6 +68,7 @@ const EXAMS: ExamEntry[] = [
     day: "Wednesday",
     shortDate: "02 Sep",
     course: "IPE 4605",
+    name: "Quality Control and Management",
     room: "3rd AcB 104, 105, 108 · 2nd AcB 201, 202, 304",
     start: new Date("2026-09-02T03:30:00.000Z"),
     end: new Date("2026-09-02T06:30:00.000Z"),
@@ -81,6 +85,7 @@ const EXAMS: ExamEntry[] = [
     day: "Monday",
     shortDate: "07 Sep",
     course: "IPE 4609",
+    name: "Product Design I",
     room: "3rd AcB 104, 105, 108 · 2nd AcB 201, 202, 304",
     start: new Date("2026-09-07T03:30:00.000Z"),
     end: new Date("2026-09-07T06:30:00.000Z"),
@@ -91,6 +96,7 @@ const EXAMS: ExamEntry[] = [
     day: "Thursday",
     shortDate: "10 Sep",
     course: "IPE 4611",
+    name: "Operations Research",
     room: "3rd AcB 104, 105, 108 · 2nd AcB 201, 202, 304",
     start: new Date("2026-09-10T03:30:00.000Z"),
     end: new Date("2026-09-10T06:30:00.000Z"),
@@ -195,6 +201,7 @@ function ScheduleRow({
           {isNext ? <span className="next-badge">Next</span> : null}
           {isSelected && !isNext ? <span className="selected-badge">Viewing</span> : null}
         </div>
+        <p className="course-name">{entry.name}</p>
         <p className="schedule-time">
           <Clock size={14} aria-hidden="true" />
           {EXAM_TIME}
@@ -280,6 +287,7 @@ export default function Home() {
                 <div>
                   <p className="countdown-pretitle">{isActive ? "In the room now" : isPast ? "Routine marker" : "Make the gap count"}</p>
                   <h1>{isPast ? "The routine is complete." : <>Next up: <em>{displayExam.course}</em></>}</h1>
+                  {!isPast && <p className="selected-course-name">{displayExam.name}</p>}
                 </div>
                 <ArrowDownRight className="heading-arrow" size={34} strokeWidth={1.4} aria-hidden="true" />
               </div>
