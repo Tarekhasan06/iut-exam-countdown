@@ -685,9 +685,7 @@ export default function Home() {
           )}
         </section>
 
-        <footer className="site-footer">
-          <p className="footer-note"><AlarmClock size={15} aria-hidden="true" /> Admit card mandatory for every examination.</p>
-        </footer>
+        <footer className="site-footer" />
       </main>
     </div>
   );

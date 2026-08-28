@@ -48,3 +48,8 @@
 
 - [x] Remove the source note from the footer and the “Dhaka Time” label from the header.
 - [x] Verify the copy cleanup with typecheck, build, and a visual review.
+
+## Final Footer Cleanup
+
+- [x] Remove the admit-card reminder from the footer.
+- [x] Verify the final footer cleanup with typecheck, build, and a visual review.
