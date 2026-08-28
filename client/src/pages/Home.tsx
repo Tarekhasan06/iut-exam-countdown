@@ -378,7 +378,6 @@ export default function Home() {
             <span className="header-status-dot" aria-hidden="true" />
             <span>Summer semester · 6th semester</span>
             <span className="header-divider" aria-hidden="true" />
-            <span>Dhaka time</span>
           </div>
           <button
             type="button"
@@ -687,7 +686,6 @@ export default function Home() {
         </section>
 
         <footer className="site-footer">
-          <p><strong>Source:</strong> Revised Summer Semester Final Examination Schedule, notice dated 18 August 2026, IUT.</p>
           <p className="footer-note"><AlarmClock size={15} aria-hidden="true" /> Admit card mandatory for every examination.</p>
         </footer>
       </main>

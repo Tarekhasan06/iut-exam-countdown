@@ -43,3 +43,8 @@
 - [x] Render files and links as unified cards with direct open actions.
 - [x] Verify validation, access rules, responsive rendering, tests, and production build.
 - [x] Save and deliver the expanded resource shelf checkpoint.
+
+## Copy Cleanup
+
+- [x] Remove the source note from the footer and the “Dhaka Time” label from the header.
+- [x] Verify the copy cleanup with typecheck, build, and a visual review.
