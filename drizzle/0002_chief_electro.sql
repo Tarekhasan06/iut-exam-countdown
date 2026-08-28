@@ -1,0 +1,1 @@
+ALTER TABLE `studyMaterials` ADD `resourceType` enum('file','link') DEFAULT 'file' NOT NULL;

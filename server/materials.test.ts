@@ -24,7 +24,7 @@ function createContext(role: "user" | "admin" = "user"): TrpcContext {
   };
 }
 
-describe("materials.upload", () => {
+describe("materials.resources", () => {
   it("rejects unsupported file types before touching storage", async () => {
     const caller = appRouter.createCaller(createContext());
 
@@ -64,6 +64,29 @@ describe("materials.upload", () => {
         visibility: "shared",
       }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("rejects non-web protocols for saved links", async () => {
+    const caller = appRouter.createCaller(createContext());
+
+    await expect(
+      caller.materials.addLink({
+        title: "Unsafe link",
+        url: "ftp://example.com/material.pdf",
+      }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("rejects official links from regular students", async () => {
+    const caller = appRouter.createCaller(createContext("user"));
+
+    await expect(
+      caller.materials.addLink({
+        title: "Official notes",
+        url: "https://docs.google.com/document/d/example",
+        visibility: "shared",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("rejects payloads whose decoded bytes do not match the declared size", async () => {

@@ -33,6 +33,7 @@ export const studyMaterials = mysqlTable("studyMaterials", {
   fileName: varchar("fileName", { length: 255 }).notNull(),
   mimeType: varchar("mimeType", { length: 128 }).notNull(),
   fileSize: int("fileSize").notNull(),
+  resourceType: mysqlEnum("resourceType", ["file", "link"]).default("file").notNull(),
   visibility: mysqlEnum("visibility", ["private", "shared"]).default("private").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

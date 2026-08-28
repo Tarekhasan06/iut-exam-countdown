@@ -75,6 +75,39 @@ export const appRouter = router({
         return created;
       }),
 
+    addLink: protectedProcedure
+      .input(z.object({
+        title: z.string().trim().min(1).max(255),
+        url: z.string().trim().url().max(1024),
+        visibility: z.enum(["private", "shared"]).default("private"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (input.visibility === "shared" && ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can publish official links." });
+        }
+
+        const parsedUrl = new URL(input.url);
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Only HTTP and HTTPS links are supported." });
+        }
+
+        const created = await insertStudyMaterial({
+          userId: ctx.user.id,
+          fileKey: `study-links/${input.visibility}/${ctx.user.id}/${Date.now()}-${safeFileName(input.title)}`,
+          fileUrl: parsedUrl.toString(),
+          fileName: input.title,
+          mimeType: "text/uri-list",
+          fileSize: 0,
+          resourceType: "link",
+          visibility: input.visibility,
+        });
+
+        if (!created) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Link metadata could not be saved." });
+        }
+        return created;
+      }),
+
     remove: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(async ({ ctx, input }) => {

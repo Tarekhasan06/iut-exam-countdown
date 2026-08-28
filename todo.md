@@ -34,3 +34,12 @@
 - [x] Update signed-out copy and public empty/loading/error states.
 - [x] Verify public listing, private isolation, admin controls, responsive rendering, tests, and production build.
 - [x] Save and deliver the public Official Materials checkpoint.
+
+## Link-Based Study Resources
+
+- [x] Add resource type and URL metadata with safe defaults for existing uploaded files.
+- [x] Add validated private and official link-resource procedures with owner/admin permissions.
+- [x] Add title and URL forms for Google Drive, Google Docs, and general web links.
+- [x] Render files and links as unified cards with direct open actions.
+- [x] Verify validation, access rules, responsive rendering, tests, and production build.
+- [x] Save and deliver the expanded resource shelf checkpoint.

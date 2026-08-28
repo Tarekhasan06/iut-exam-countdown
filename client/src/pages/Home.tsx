@@ -22,6 +22,7 @@ import {
   CircleCheck,
   Clock,
   FileText,
+  Link2,
   MapPin,
   Notebook,
   Trash2,
@@ -250,6 +251,10 @@ function ScheduleRow({
 export default function Home() {
   const [now, setNow] = useState(() => Date.now());
   const [trackingMode, setTrackingMode] = useState<"next" | string>("next");
+  const [privateLinkTitle, setPrivateLinkTitle] = useState("");
+  const [privateLinkUrl, setPrivateLinkUrl] = useState("");
+  const [officialLinkTitle, setOfficialLinkTitle] = useState("");
+  const [officialLinkUrl, setOfficialLinkUrl] = useState("");
   const { theme, toggleTheme } = useTheme();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -272,6 +277,16 @@ export default function Home() {
       toast.success("Study material removed.");
     },
     onError: (error) => toast.error(error.message || "Could not remove this file."),
+  });
+  const addLink = trpc.materials.addLink.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        trpcUtils.materials.list.invalidate(),
+        trpcUtils.materials.shared.invalidate(),
+      ]);
+      toast.success("Resource link saved.");
+    },
+    onError: (error) => toast.error(error.message || "Could not save this link."),
   });
   const removeSharedMaterial = trpc.materials.removeShared.useMutation({
     onSuccess: async () => {
@@ -304,6 +319,22 @@ export default function Home() {
     if (isActive) return "The paper is in progress";
     if (isPast) return "This paper has finished";
     return isNext ? "Next paper" : "Selected paper";
+  };
+
+  const handleAddLink = async (event: React.FormEvent<HTMLFormElement>, visibility: "private" | "shared") => {
+    event.preventDefault();
+    const title = visibility === "private" ? privateLinkTitle : officialLinkTitle;
+    const url = visibility === "private" ? privateLinkUrl : officialLinkUrl;
+    if (!title.trim() || !url.trim()) return;
+    await addLink.mutateAsync({ title, url, visibility }).then(() => {
+      if (visibility === "private") {
+        setPrivateLinkTitle("");
+        setPrivateLinkUrl("");
+      } else {
+        setOfficialLinkTitle("");
+        setOfficialLinkUrl("");
+      }
+    }).catch(() => undefined);
   };
 
   const handleMaterialUpload = async (event: React.ChangeEvent<HTMLInputElement>, visibility: "private" | "shared" = "private") => {
@@ -536,6 +567,14 @@ export default function Home() {
                   </span>
                   <span className="upload-arrow"><ArrowDownRight size={18} aria-hidden="true" /></span>
                 </label>
+                <form className="link-resource-form" onSubmit={(event) => handleAddLink(event, "private")}>
+                  <div className="link-form-heading"><Link2 size={15} aria-hidden="true" /><span>Save a Drive, Docs, or web link</span></div>
+                  <input aria-label="Private resource title" value={privateLinkTitle} onChange={(event) => setPrivateLinkTitle(event.target.value)} placeholder="Title, e.g. IPE 4603 notes" maxLength={255} />
+                  <div className="link-form-row">
+                    <input aria-label="Private resource URL" type="url" value={privateLinkUrl} onChange={(event) => setPrivateLinkUrl(event.target.value)} placeholder="https://drive.google.com/..." maxLength={1024} />
+                    <Button type="submit" size="sm" disabled={addLink.isPending || !privateLinkTitle.trim() || !privateLinkUrl.trim()}>{addLink.isPending ? "Saving…" : "Save link"}</Button>
+                  </div>
+                </form>
 
                 {materialsQuery.isLoading ? (
                   <div className="materials-loading">Loading your saved materials…</div>
@@ -551,11 +590,13 @@ export default function Home() {
                   <ul className="materials-list">
                     {materialsQuery.data.map((material) => (
                       <li key={material.id} className="material-item">
-                        <div className="material-file-icon"><FileText size={18} aria-hidden="true" /></div>
-                        <div className="material-file-copy">
-                          <a href={material.fileUrl} target="_blank" rel="noreferrer">{material.fileName}<ExternalLink size={13} aria-hidden="true" /></a>
-                          <span>{formatFileSize(material.fileSize)} · {formatDate(new Date(material.createdAt), { day: "2-digit", month: "short", year: "numeric" })}</span>
-                        </div>
+                          <div className={cn("material-file-icon", material.resourceType === "link" && "link-file-icon")}>
+                            {material.resourceType === "link" ? <Link2 size={18} aria-hidden="true" /> : <FileText size={18} aria-hidden="true" />}
+                          </div>
+                          <div className="material-file-copy">
+                            <a href={material.fileUrl} target="_blank" rel="noreferrer">{material.fileName}<ExternalLink size={13} aria-hidden="true" /></a>
+                            <span>{material.resourceType === "link" ? "Web link" : formatFileSize(material.fileSize)} · {formatDate(new Date(material.createdAt), { day: "2-digit", month: "short", year: "numeric" })}</span>
+                          </div>
                         <Button className="material-remove" variant="ghost" size="icon" aria-label={`Remove ${material.fileName}`} disabled={removeMaterial.isPending} onClick={() => removeMaterial.mutate({ id: material.id })}>
                           <Trash2 size={16} aria-hidden="true" />
                         </Button>
@@ -581,6 +622,7 @@ export default function Home() {
                 </div>
                 <p className="official-materials-note">Admin-published resources are visible to everyone. Personal uploads stay private.</p>
                 {isAdmin && (
+                  <>
                   <label className={cn("upload-dropzone official-upload", uploadMaterial.isPending && "uploading")} htmlFor="official-material-upload">
                     <input
                       id="official-material-upload"
@@ -596,6 +638,15 @@ export default function Home() {
                     </span>
                     <span className="upload-arrow"><ArrowDownRight size={18} aria-hidden="true" /></span>
                   </label>
+                  <form className="link-resource-form official-link-form" onSubmit={(event) => handleAddLink(event, "shared")}>
+                    <div className="link-form-heading"><Link2 size={15} aria-hidden="true" /><span>Publish a Drive, Docs, or web link</span></div>
+                    <input aria-label="Official resource title" value={officialLinkTitle} onChange={(event) => setOfficialLinkTitle(event.target.value)} placeholder="Title, e.g. Final routine PDF" maxLength={255} />
+                    <div className="link-form-row">
+                      <input aria-label="Official resource URL" type="url" value={officialLinkUrl} onChange={(event) => setOfficialLinkUrl(event.target.value)} placeholder="https://docs.google.com/..." maxLength={1024} />
+                      <Button type="submit" size="sm" disabled={addLink.isPending || !officialLinkTitle.trim() || !officialLinkUrl.trim()}>{addLink.isPending ? "Publishing…" : "Publish link"}</Button>
+                    </div>
+                  </form>
+                  </>
                 )}
                 {sharedMaterialsQuery.isLoading ? (
                   <div className="materials-loading">Loading official materials…</div>
