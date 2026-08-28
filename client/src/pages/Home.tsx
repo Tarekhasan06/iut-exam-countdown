@@ -685,7 +685,9 @@ export default function Home() {
           )}
         </section>
 
-        <footer className="site-footer" />
+        <footer className="site-footer">
+          <p className="archive-credit">© IUT IPE ARCHIVE 2023 - 2027</p>
+        </footer>
       </main>
     </div>
   );

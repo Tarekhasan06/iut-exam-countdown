@@ -53,3 +53,8 @@
 
 - [x] Remove the admit-card reminder from the footer.
 - [x] Verify the final footer cleanup with typecheck, build, and a visual review.
+
+## Archive Footer
+
+- [x] Add “© IUT IPE ARCHIVE 2023 - 2027” at the bottom of the page.
+- [x] Verify the archive footer with typecheck, build, and a visual review.

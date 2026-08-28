@@ -1599,6 +1599,14 @@
   margin: 0;
 }
 
+.archive-credit {
+  color: rgba(255, 250, 240, 0.7);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .site-footer strong {
   color: var(--ivory);
 }
