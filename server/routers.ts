@@ -31,7 +31,7 @@ export const appRouter = router({
 
   materials: router({
     list: protectedProcedure.query(({ ctx }) => listStudyMaterials(ctx.user.id)),
-    shared: protectedProcedure.query(() => listSharedStudyMaterials()),
+    shared: publicProcedure.query(() => listSharedStudyMaterials()),
 
     upload: protectedProcedure
       .input(z.object({

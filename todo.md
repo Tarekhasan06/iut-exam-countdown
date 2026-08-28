@@ -26,3 +26,11 @@
 - [x] Add an Official Materials section with admin upload controls and student read-only access.
 - [x] Verify permissions, list/open/delete behavior, responsive rendering, tests, and production build.
 - [x] Save and deliver the shared-materials checkpoint.
+
+## Public Official Materials
+
+- [x] Make the shared Official Materials list readable without authentication.
+- [x] Keep private materials owner-only and keep upload/delete operations protected.
+- [x] Update signed-out copy and public empty/loading/error states.
+- [x] Verify public listing, private isolation, admin controls, responsive rendering, tests, and production build.
+- [x] Save and deliver the public Official Materials checkpoint.

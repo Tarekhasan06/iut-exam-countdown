@@ -254,7 +254,7 @@ export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const isAdmin = user?.role === "admin";
   const materialsQuery = trpc.materials.list.useQuery(undefined, { enabled: isAuthenticated });
-  const sharedMaterialsQuery = trpc.materials.shared.useQuery(undefined, { enabled: isAuthenticated });
+  const sharedMaterialsQuery = trpc.materials.shared.useQuery();
   const trpcUtils = trpc.useUtils();
   const uploadMaterial = trpc.materials.upload.useMutation({
     onSuccess: async () => {
@@ -490,28 +490,30 @@ export default function Home() {
               <h2 id="materials-title">Keep your study materials close.</h2>
               <p>Save personal notes privately, or find admin-published routine PDFs and reference sheets in one shelf beside your exam timeline.</p>
             </div>
-            <span className="materials-count">{isAuthenticated ? `${materialsQuery.data?.length ?? 0} private · ${sharedMaterialsQuery.data?.length ?? 0} official` : "Private by design"}</span>
+            <span className="materials-count">{isAuthenticated ? `${materialsQuery.data?.length ?? 0} private · ${sharedMaterialsQuery.data?.length ?? 0} official` : `${sharedMaterialsQuery.data?.length ?? 0} official`}</span>
           </div>
 
           {authLoading ? (
-            <div className="materials-loading">Checking your study shelf…</div>
-          ) : !isAuthenticated ? (
-            <div className="materials-signin">
-              <div className="materials-signin-copy">
-                <CircleCheck size={20} aria-hidden="true" />
-                <div>
-                  <strong>Sign in to save your own files.</strong>
-                  <span>Official materials will also appear here after you sign in.</span>
-                </div>
-              </div>
-              <Button className="materials-signin-button" onClick={() => startLogin()}>
-                Sign in to upload
-                <ArrowUpRight size={16} aria-hidden="true" />
-              </Button>
-            </div>
+            <div className="materials-loading">Loading the public materials shelf…</div>
           ) : (
             <div className="materials-body">
-              <div className="materials-group">
+              {!isAuthenticated && (
+                <div className="materials-signin materials-public-note">
+                  <div className="materials-signin-copy">
+                    <CircleCheck size={20} aria-hidden="true" />
+                    <div>
+                      <strong>Official materials are public.</strong>
+                      <span>Sign in only when you want to save personal files or publish as an admin.</span>
+                    </div>
+                  </div>
+                  <Button className="materials-signin-button" onClick={() => startLogin()}>
+                    Sign in to upload
+                    <ArrowUpRight size={16} aria-hidden="true" />
+                  </Button>
+                </div>
+              )}
+              {isAuthenticated && (
+                <div className="materials-group">
                 <div className="materials-group-header">
                   <div>
                     <span className="materials-kicker">Private shelf</span>
@@ -567,6 +569,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
+              )}
 
               <div className="materials-group official-materials">
                 <div className="materials-group-header">
@@ -576,7 +579,7 @@ export default function Home() {
                   </div>
                   <span className="materials-group-count">{sharedMaterialsQuery.data?.length ?? 0} shared</span>
                 </div>
-                <p className="official-materials-note">Admin-published resources are visible to every signed-in student. Personal uploads stay private.</p>
+                <p className="official-materials-note">Admin-published resources are visible to everyone. Personal uploads stay private.</p>
                 {isAdmin && (
                   <label className={cn("upload-dropzone official-upload", uploadMaterial.isPending && "uploading")} htmlFor="official-material-upload">
                     <input
@@ -589,7 +592,7 @@ export default function Home() {
                     <span className="upload-icon"><UploadCloud size={21} aria-hidden="true" /></span>
                     <span>
                       <strong>{uploadMaterial.isPending ? "Publishing official material…" : "Publish an official material"}</strong>
-                      <small>Shared with signed-in students · up to 10 MB</small>
+                      <small>Visible to everyone · up to 10 MB</small>
                     </span>
                     <span className="upload-arrow"><ArrowDownRight size={18} aria-hidden="true" /></span>
                   </label>
