@@ -1587,7 +1587,7 @@
 .site-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1.5rem;
   padding: 1.55rem 0 0.9rem;
   color: rgba(255, 250, 240, 0.68);
@@ -1600,10 +1600,13 @@
 }
 
 .archive-credit {
+  width: 100%;
   color: rgba(255, 250, 240, 0.7);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-align: center;
   text-transform: uppercase;
 }
 

@@ -58,3 +58,13 @@
 
 - [x] Add “© IUT IPE ARCHIVE 2023 - 2027” at the bottom of the page.
 - [x] Verify the archive footer with typecheck, build, and a visual review.
+
+## Study Prompt Cleanup
+
+- [x] Remove the “Built from your revised schedule” text.
+- [x] Verify the prompt cleanup with typecheck, build, and a visual review.
+
+## Archive Credit Refinement
+
+- [x] Center the archive credit and apply a classic serif font.
+- [x] Verify the archive credit refinement with typecheck, build, and a visual review.

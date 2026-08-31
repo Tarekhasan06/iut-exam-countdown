@@ -499,7 +499,6 @@ export default function Home() {
                 <BookOpen size={17} aria-hidden="true" />
                 Review the routine
               </Button>
-              <span className="action-note"><Check size={14} aria-hidden="true" /> Built from your revised schedule</span>
             </div>
           </div>
           <div className="prep-visual">
